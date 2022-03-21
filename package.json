@@ -1,0 +1,39 @@
+{
+  "name": "cygnus-bot",
+  "version": "1.0.0",
+  "description": "Cygnus bot for meipurusutori",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && node ./build/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chew01/cygnus-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chew01/cygnus-bot/issues"
+  },
+  "homepage": "https://github.com/chew01/cygnus-bot#readme",
+  "dependencies": {
+    "@discordjs/builders": "^0.12.0",
+    "@discordjs/rest": "^0.3.0",
+    "chalk": "^4.1.2",
+    "discord-api-types": "^0.29.0",
+    "discord.js": "^13.6.0",
+    "dotenv": "^16.0.0",
+    "pg": "^8.7.3"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.21",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
+    "eslint": "^8.11.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.4",
+    "typescript": "^4.6.2"
+  }
+}
