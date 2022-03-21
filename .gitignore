@@ -104,4 +104,7 @@ dist
 .tern-port
 
 # build
-build/*
+build
+
+#ide
+.idea
