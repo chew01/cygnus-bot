@@ -1,7 +1,8 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
+import { SlashCommand } from '../../types/command';
 
-const infoCommand = {
+const testCommand: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName('info')
     .setDescription('Replies with Pong!'),
@@ -10,4 +11,4 @@ const infoCommand = {
   },
 };
 
-export default infoCommand;
+export default testCommand;

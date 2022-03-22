@@ -20,3 +20,7 @@ export const GATEWAY_INTENTS: IntentsString[] = [
   'DIRECT_MESSAGES',
   'GUILD_MESSAGES',
 ];
+
+export const BOT_VERSION = 'v1.0.0';
+// eslint-disable-next-line no-bitwise
+export const BOT_CREATED_AT = Number(BOT_ID >> 22n) + 1420070400000;
