@@ -6,12 +6,13 @@ import {
 import { CommandInteraction } from 'discord.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type slashExecuteFunction = (interaction: CommandInteraction, ...args: any[]) => Promise<void>
+export type slashExecuteFn = (interaction: CommandInteraction, ...args: any[]) => Promise<void>
 
 export interface SlashCommand {
     data: SlashCommandBuilder
         | SlashCommandSubcommandsOnlyBuilder
         | SlashCommandOptionsOnlyBuilder
         | Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>,
-    execute: slashExecuteFunction
+    execute: slashExecuteFn,
+    devOnly?: boolean,
 }

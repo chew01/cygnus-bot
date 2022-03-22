@@ -6,6 +6,7 @@ import { commands } from '../../commands';
 const interactionCreateEventHandler: BotEventHandler = {
   name: 'interactionCreate',
   once: false,
+  // eslint-disable-next-line consistent-return
   async execute(bot: Client, interaction: Interaction): Promise<void> {
     if (!interaction.isCommand()) log.info('Interaction was created, but it was not a slash command.');
     // Interaction is a slash command

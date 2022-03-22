@@ -4,16 +4,16 @@ import {
 } from './config';
 import { updateDevCommands, updateGlobalCommands } from './utils/commandUpdater';
 import log from './utils/logger';
-import { setUpEventHandlers } from './events';
+import setUpEventHandlers from './events';
 import { setUpCommandCollections } from './commands';
 
-(async () => {
-  const bot = new Client({ intents: GATEWAY_INTENTS });
+const bot = new Client({ intents: GATEWAY_INTENTS });
 
-  // Add event listeners to bot client
+async function initialize(botClient: Client) {
+  // Add commands to bot client
   await setUpCommandCollections();
-  await setUpEventHandlers(bot);
-
+  // Add event listeners to bot client
+  await setUpEventHandlers(botClient);
   if (DEVELOPMENT_MODE) {
     log.info('[DEV MODE] Updating slash commands for dev server.');
     await updateDevCommands();
@@ -21,6 +21,9 @@ import { setUpCommandCollections } from './commands';
     log.info('[PROD MODE] Propagating commands globally. This may take up to an hour.');
     await updateGlobalCommands();
   }
+  await botClient.login(DISCORD_TOKEN);
+}
 
-  await bot.login(DISCORD_TOKEN);
-})();
+initialize(bot).then(() => log.info('[INITIALIZING] Initialization is complete.'));
+
+export default bot;

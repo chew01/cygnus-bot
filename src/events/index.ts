@@ -1,17 +1,21 @@
-import { Client, Collection } from 'discord.js';
+import { Client } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
 import { BotEventHandler } from '../types/event';
 import log from '../utils/logger';
 
-const events = new Collection<string, BotEventHandler>();
+const events: BotEventHandler[] = [];
 const eventPaths = fs.readdirSync(path.resolve(__dirname, 'eventHandlers/')).filter((filename) => filename.endsWith('.js'));
 eventPaths.forEach((eventHandler) => {
   import(`./eventHandlers/${eventHandler}`)
-    .then((event) => events.set(event.default.name, event.default));
+    .then((event) => events.push(event.default));
 });
 
-export async function setUpEventHandlers(bot: Client) {
+/**
+ * Set up all event handlers in eventHandlers directory onto the bot.
+ * @param bot The bot client instance.
+ */
+async function setUpEventHandlers(bot: Client) {
   log.info('[INITIALIZING] Setting up event handlers...');
   events.forEach((event) => {
     if (event.once) {
