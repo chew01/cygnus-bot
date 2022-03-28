@@ -10,4 +10,6 @@ export function formatBytes(bytes: number, decimals = 2) {
   return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 }
 
-export default formatBytes;
+export function formatBigint(x: bigint) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
