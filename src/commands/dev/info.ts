@@ -5,7 +5,7 @@ import duration from 'dayjs/plugin/duration';
 import { SlashCommand } from '../../types/command';
 import bot from '../../index';
 import { BOT_CREATED_AT, BOT_VERSION } from '../../config';
-import { formatBytes } from '../../utils/math';
+import { formatBytes } from '../../utils/helpers';
 
 dayjs.extend(duration);
 
