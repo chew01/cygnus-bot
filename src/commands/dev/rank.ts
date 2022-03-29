@@ -2,16 +2,18 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction, MessageEmbed } from 'discord.js';
 import { SlashCommand } from '../../types/command';
 import { getCharRank } from '../../db/getRank';
-import { formatBigint } from '../../utils/math';
+import { formatBigint } from '../../utils/helpers';
 import { CDN_URL } from '../../config';
 
 async function playerRank(interaction: CommandInteraction): Promise<void> {
   const character = interaction.options.getString('character');
   if (!character) return interaction.reply({ content: 'No character was specified!', ephemeral: true });
   const data = await getCharRank(character);
+  if (!data) return interaction.reply({ content: 'Character does not exist!', ephemeral: true });
   const charEmbed = new MessageEmbed()
-    .setAuthor({ name: 'Profile Data', iconURL: 'https://i.imgur.com/LNZkA9g.jpg' })
+    .setAuthor({ name: 'Cygnus', iconURL: 'https://i.imgur.com/LNZkA9g.jpg' })
     .setThumbnail(`${CDN_URL}${data.characterimgurl.substring(38)}`)
+    .setTitle(`${data.charactername} - ${data.worldname}`)
     .addFields(
       { name: 'Name', value: data.charactername, inline: true },
       { name: 'Class', value: data.jobname, inline: true },
@@ -20,14 +22,15 @@ async function playerRank(interaction: CommandInteraction): Promise<void> {
       { name: 'EXP', value: formatBigint(data.exp), inline: true },
       { name: '\u200B', value: '\u200B', inline: true },
       { name: 'Overall Rank', value: `${data.overallrank}`, inline: true },
-      { name: `${data.worldname} Rank`, value: `${data.worldrank}`, inline: true },
-      { name: 'Legion Rank', value: `${data.legionrank ?? 'Unavailable'}`, inline: true },
+      { name: 'World Rank', value: `${data.worldrank}`, inline: true },
+      { name: 'World Legion Rank', value: `${data.legionrank ?? 'Unavailable'}`, inline: true },
       { name: 'Legion Level', value: `${data.legionlevel ?? 'Unavailable'}`, inline: true },
       {
         name: 'Legion Power',
         value: `${data.raidpower ? formatBigint(data.raidpower) : 'Unavailable'}`,
         inline: true,
       },
+      { name: '\u200B', value: '\u200B', inline: true },
     );
   return interaction.reply({ embeds: [charEmbed] });
 }

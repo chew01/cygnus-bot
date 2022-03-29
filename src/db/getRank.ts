@@ -3,7 +3,7 @@ import { RankingData } from '../types/rank';
 
 export async function getCharRank(character: string): Promise<RankingData> {
   const client = await pool.connect();
-  const query = 'SELECT * FROM ranking WHERE charactername = $1';
+  const query = 'SELECT * FROM ranking WHERE LOWER(charactername) = LOWER($1)';
   const characterEncoded = encodeURIComponent(character);
   try {
     const res = await client.query(query, [characterEncoded]);
