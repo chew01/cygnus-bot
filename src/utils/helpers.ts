@@ -28,3 +28,33 @@ export function formatBigint(x: bigint): string {
   }
   return x.toString();
 }
+
+export function serverToEmoji(server: string) {
+  switch (server) {
+    case 'Reboot (NA)':
+      return '<:Reboot:827355041412415508>';
+    case 'Bera':
+      return '<:Bera:827355041319878677>';
+    case 'Scania':
+      return '<:Scania:827355041366933554>';
+    case 'Aurora':
+      return '<:Aurora:827355041505607731>';
+    case 'Elysium':
+      return '<:Elysium:827355041417265182>';
+    default:
+      return '';
+  }
+}
+
+export function rankToEmoji(rank: number) {
+  switch (rank) {
+    case 1:
+      return ':first_place:';
+    case 2:
+      return ':second_place:';
+    case 3:
+      return ':third_place:';
+    default:
+      return `${rank}.`;
+  }
+}
