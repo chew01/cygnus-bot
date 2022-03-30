@@ -4,7 +4,6 @@ export type RankingData = {
     level: number,
     exp: bigint
     jobname: string,
-    jobid: number,
     worldname: string,
     worldid: number
     overallrank: number,
