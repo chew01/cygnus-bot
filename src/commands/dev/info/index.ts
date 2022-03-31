@@ -2,10 +2,10 @@ import { Embed, SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import { SlashCommand } from '../../types/command';
-import bot from '../../index';
-import { BOT_CREATED_AT, BOT_VERSION } from '../../config';
-import { formatBytes } from '../../utils/helpers';
+import { SlashCommand } from '../../../types/command';
+import bot from '../../../index';
+import { BOT_CREATED_AT, BOT_VERSION } from '../../../config';
+import { formatBytes } from '../../../utils/helpers';
 
 dayjs.extend(duration);
 
@@ -20,7 +20,7 @@ const infoCommand: SlashCommand = {
     const cachedUsers = bot.users.cache.size.toString();
     const nodeVersion = process.version;
     // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
-    const djsVersion = require('../../../package.json').dependencies['discord.js'].replace('^', 'v');
+    const djsVersion = require('../../../../package.json').dependencies['discord.js'].replace('^', 'v');
     const botVersion = BOT_VERSION;
     const botAge = `<t:${Math.floor(BOT_CREATED_AT / 1000)}:R>`;
     const uptime = dayjs.duration(bot.uptime as number).format('D[d] H[h] m[m] s[s]');

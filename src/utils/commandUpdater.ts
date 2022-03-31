@@ -28,7 +28,7 @@ export async function updateDevCommands(): Promise<void> {
 }
 
 /**
- * Upsert all commands tagged as global throughout all guilds. This may take up to an hour.
+ * Upsert all commands tagged as player throughout all guilds. This may take up to an hour.
  */
 export async function updateGlobalCommands(): Promise<void> {
   throw new Error('Not implemented yet!');
