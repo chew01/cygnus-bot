@@ -8,7 +8,6 @@ const interactionCreateEventHandler: BotEventHandler = {
   once: false,
   // eslint-disable-next-line consistent-return
   async execute(bot: Client, interaction: Interaction): Promise<void> {
-    if (!interaction.isCommand()) log.info('Interaction was created, but it was not a slash command.');
     // Interaction is a slash command
     if (interaction.isCommand()) {
       const slashCommand = commands.get(interaction.commandName);
@@ -22,10 +21,14 @@ const interactionCreateEventHandler: BotEventHandler = {
         logCommand(interaction, 'Success', interaction.commandName);
       } catch (error) {
         logCommand(interaction, 'Failure', interaction.commandName);
-        await interaction.reply({
-          content: 'Uh oh! We were unable to execute your command.',
-          ephemeral: true,
-        }).catch(log.error);
+        /*
+                        await interaction.reply({
+                          content: 'Uh oh! We were unable to execute your command.',
+                          ephemeral: true,
+                        });
+                        */
+
+        if (error instanceof Error) log.error(error.stack ? error.stack : error.message);
       }
     }
   },
