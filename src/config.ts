@@ -28,6 +28,7 @@ export const DB_PORT = Number(process.env.DB_PORT) ?? 5432;
 export const DB_MAX_CLIENTS = Number(process.env.DB_MAX_CLIENTS) ?? 5;
 
 export const GATEWAY_INTENTS: IntentsString[] = [
+  'GUILDS',
   'DIRECT_MESSAGES',
   'GUILD_MESSAGES',
 ];
