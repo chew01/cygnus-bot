@@ -1,16 +1,23 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import {
   CommandInteraction,
-  Message, MessageActionRow, MessageButton, MessageComponentInteraction, MessageEmbed,
+  Message,
+  MessageActionRow,
+  MessageButton,
+  MessageComponentInteraction,
+  MessageEmbed,
 } from 'discord.js';
 import { SlashCommand } from '../../types/command';
-import { getCharRank, getWorldRank } from '../../db/getRank';
 import { formatBigint, rankToEmoji, serverToEmoji } from '../../utils/helpers';
 import { CDN_URL } from '../../config';
-import { RankingData } from '../../types/rank';
-import log from '../../utils/logger';
-
-type rankingType = 'overallrank' | 'worldrank'
+import {
+  getCharRank,
+  getJobLeaderboard,
+  getJobLeaderboardPages,
+  getWorldLeaderboard,
+  getWorldLeaderboardPages,
+  jobs,
+} from '../../db/cache';
 
 async function playerRank(interaction: CommandInteraction): Promise<void> {
   const character = interaction.options.getString('character');
@@ -42,53 +49,73 @@ async function playerRank(interaction: CommandInteraction): Promise<void> {
   return interaction.reply({ embeds: [charEmbed] });
 }
 
-async function createLeaderboard(
-  data: RankingData[],
-  ranking: rankingType,
-  thumbnail: string,
-  title: string,
-) {
+async function createWorldLeaderboard(world: string, page: number) {
+  const data = getWorldLeaderboard(world, page);
   const fields = data.map((charData) => ({
-    name: `${rankToEmoji(charData[ranking])} ${charData.charactername} - Lv. ${charData.level} ${charData.jobname}`,
-    value: `> Global Rank #${charData.overallrank} | World Rank #${charData.worldrank}
+    name: `${rankToEmoji(charData.worldrank)} ${charData.charactername} - Lv. ${charData.level} ${charData.jobname}`,
+    value: `> Global Rank #${charData.overallrank} | ${charData.worldname} Rank #${charData.worldrank}
         > World Legion Rank #${charData.legionrank ?? 'Unavailable'}`,
   }));
 
   return new MessageEmbed()
-    .setThumbnail(thumbnail)
-    .setTitle(title)
-    .addFields(fields);
+    .setThumbnail('https://i.imgur.com/GC5JkFT.png')
+    .setTitle(`Leaderboard - ${world} ${serverToEmoji(world)}`)
+    .addFields(fields)
+    .setFooter({
+      text: `Page ${page + 1} / ${getWorldLeaderboardPages(world)}`,
+    });
 }
 
-async function worldLeaderboard(interaction: CommandInteraction): Promise<void> {
-  const world = interaction.options.getString('world');
-  if (!world) return interaction.reply({ content: 'No world was specified!', ephemeral: true });
-  const data = await getWorldRank(world);
-  if (!data) return interaction.reply({ content: 'World does not exist!', ephemeral: true });
-
-  const worldEmbed = await createLeaderboard(
-    data,
-    'worldrank',
-    'https://i.imgur.com/GC5JkFT.png',
-    `Leaderboard - ${world} ${serverToEmoji(world)}`,
-  );
+function createGalleryRow(page: number, pageCount: number, end?: boolean): MessageActionRow {
   const prevBtn = new MessageButton()
     .setCustomId('prevbtn')
     .setLabel('Previous')
-    .setEmoji('arrow_backward')
+    .setEmoji('◀️')
     .setStyle('PRIMARY');
   const nextBtn = new MessageButton()
     .setCustomId('nextbtn')
     .setLabel('Next')
-    .setEmoji('arrow_forward')
+    .setEmoji('▶️')
     .setStyle('PRIMARY');
-  const gallery = new MessageActionRow()
+  const timeOut = new MessageButton()
+    .setCustomId('timeout')
+    .setLabel('Command timed out.')
+    .setEmoji('🕓')
+    .setStyle('SECONDARY')
+    .setDisabled(true);
+  if (end) {
+    return new MessageActionRow()
+      .addComponents(timeOut);
+  }
+  if (page === 0 && page === pageCount - 1) {
+    return new MessageActionRow()
+      .addComponents(prevBtn.setDisabled(true), nextBtn.setDisabled(true));
+  }
+  if (page === 0) {
+    return new MessageActionRow()
+      .addComponents(prevBtn.setDisabled(true), nextBtn);
+  }
+  if (page === pageCount - 1) {
+    return new MessageActionRow()
+      .addComponents(prevBtn, nextBtn.setDisabled(true));
+  }
+  return new MessageActionRow()
     .addComponents(prevBtn, nextBtn);
+}
+
+// eslint-disable-next-line consistent-return
+async function worldLeaderboard(interaction: CommandInteraction): Promise<void> {
+  const world = interaction.options.getString('world');
+  if (!world) return interaction.reply({ content: 'No world was specified!', ephemeral: true });
+
+  let page = 0;
+  const pageCount = getWorldLeaderboardPages(world);
+  const worldEmbed = await createWorldLeaderboard(world, page);
 
   if (!interaction.deferred) await interaction.deferReply();
   const curPage = await interaction.editReply({
     embeds: [worldEmbed],
-    components: [gallery],
+    components: [createGalleryRow(page, pageCount)],
   }) as Message;
 
   const filter = (i: MessageComponentInteraction) => i.user.id === interaction.user.id
@@ -96,9 +123,107 @@ async function worldLeaderboard(interaction: CommandInteraction): Promise<void> 
   const collector = curPage.createMessageComponentCollector({ filter, time: 30000 });
 
   collector.on('collect', async (i) => {
-    log.info(i.user.id);
+    switch (i.customId) {
+      case 'prevbtn':
+        if (page === 0) break;
+        page -= 1;
+        break;
+      case 'nextbtn':
+        if (page === pageCount - 1) break;
+        page += 1;
+        break;
+      default:
+        break;
+    }
+    const newWorldEmbed = await createWorldLeaderboard(world, page);
+
+    await i.update({
+      embeds: [newWorldEmbed],
+      components: [createGalleryRow(page, pageCount)],
+    });
+
+    collector.resetTimer();
   });
-  return log.info('placeholder');
+
+  collector.on('end', (_, reason) => {
+    if (reason === 'time') {
+      interaction.webhook.editMessage('@original', {
+        components: [createGalleryRow(page, pageCount, true)],
+      });
+    }
+  });
+}
+
+async function createJobLeaderboard(job: string, page: number, world?: string) {
+  const data = getJobLeaderboard(job, page, world);
+  const fields = data.map((charData) => ({
+    name: `${charData.index ? rankToEmoji(charData.index) : ''} ${charData.charactername} - Lv. ${charData.level} ${charData.jobname}`,
+    value: `> Global Rank #${charData.overallrank} | ${charData.worldname} Rank #${charData.worldrank}
+        > World Legion Rank #${charData.legionrank ?? 'Unavailable'}`,
+  }));
+
+  return new MessageEmbed()
+    .setThumbnail('https://i.imgur.com/GC5JkFT.png')
+    .setTitle(`Leaderboard - ${job}${world ? ` in ${world} ${serverToEmoji(world)}` : ''}`)
+    .addFields(fields)
+    .setFooter({
+      text: `Page ${page + 1} / ${getJobLeaderboardPages(job, world)}`,
+    });
+}
+
+// eslint-disable-next-line consistent-return
+async function jobLeaderboard(interaction: CommandInteraction): Promise<void> {
+  const jobinput = interaction.options.getString('job');
+  const world = interaction.options.getString('world') ?? undefined;
+  const job = jobs.find((jobName) => jobName.toLowerCase() === jobinput);
+  if (!job) {
+    return interaction.reply({ content: 'Job does not exist!', ephemeral: true });
+  }
+
+  let page = 0;
+  const pageCount = getJobLeaderboardPages(job);
+  const jobEmbed = await createJobLeaderboard(job, page, world);
+
+  if (!interaction.deferred) await interaction.deferReply();
+  const curPage = await interaction.editReply({
+    embeds: [jobEmbed],
+    components: [createGalleryRow(page, pageCount)],
+  }) as Message;
+
+  const filter = (i: MessageComponentInteraction) => i.user.id === interaction.user.id
+        && (i.customId === 'prevbtn' || i.customId === 'nextbtn');
+  const collector = curPage.createMessageComponentCollector({ filter, time: 30000 });
+
+  collector.on('collect', async (i) => {
+    switch (i.customId) {
+      case 'prevbtn':
+        if (page === 0) break;
+        page -= 1;
+        break;
+      case 'nextbtn':
+        if (page === pageCount - 1) break;
+        page += 1;
+        break;
+      default:
+        break;
+    }
+    const newJobEmbed = await createJobLeaderboard(job, page, world);
+
+    await i.update({
+      embeds: [newJobEmbed],
+      components: [createGalleryRow(page, pageCount)],
+    });
+
+    collector.resetTimer();
+  });
+
+  collector.on('end', (_, reason) => {
+    if (reason === 'time') {
+      interaction.webhook.editMessage('@original', {
+        components: [createGalleryRow(page, pageCount, true)],
+      });
+    }
+  });
 }
 
 const rankCommand: SlashCommand = {
@@ -126,11 +251,24 @@ const rankCommand: SlashCommand = {
         .addChoice('Reboot (NA)', 'Reboot (NA)')))
     .addSubcommand((subcommand) => subcommand
       .setName('j')
-      .setDescription('Finds the ranking data for a Maplestory job.')),
+      .setDescription('Finds the ranking data for a Maplestory job.')
+      .addStringOption((option) => option
+        .setName('job')
+        .setDescription('The Maplestory job to find rankings for.')
+        .setRequired(true))
+      .addStringOption((option) => option
+        .setName('world')
+        .setDescription('The Maplestory world to find job rankings for.')
+        .addChoice('Scania', 'Scania')
+        .addChoice('Bera', 'Bera')
+        .addChoice('Aurora', 'Aurora')
+        .addChoice('Elysium', 'Elysium')
+        .addChoice('Reboot (NA)', 'Reboot (NA)'))),
   async execute(interaction: CommandInteraction) {
     const subcommand = interaction.options.getSubcommand();
     if (subcommand === 'p') return playerRank(interaction);
     if (subcommand === 'w') return worldLeaderboard(interaction);
+    if (subcommand === 'j') return jobLeaderboard(interaction);
     return interaction.reply({ content: 'Invalid subcommand!', ephemeral: true });
   },
 };
