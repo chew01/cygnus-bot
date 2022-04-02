@@ -1,3 +1,5 @@
+import { CharacterHistoricalData } from '../types/rank';
+
 export function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
 
@@ -57,4 +59,19 @@ export function rankToEmoji(rank: number) {
     default:
       return `${rank}.`;
   }
+}
+
+export function calculateEXPAverages(data: CharacterHistoricalData[]): { WeekAverage: bigint, FortnightAverage: bigint } {
+  let weekTally = 0n;
+  let fortnightTally = 0n;
+  const week = data.slice(8);
+  week.forEach((snapshot) => {
+    weekTally += BigInt(snapshot.EXPDifference);
+  });
+  const fortnight = data.slice(1);
+  fortnight.forEach((snapshot) => {
+    fortnightTally += BigInt(snapshot.EXPDifference);
+  });
+
+  return { WeekAverage: weekTally / 7n, FortnightAverage: fortnightTally / 14n };
 }

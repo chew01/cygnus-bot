@@ -1,37 +1,52 @@
 import { CommandInteraction, MessageEmbed } from 'discord.js';
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import { getCharRank } from '../../../../db/cache';
 import { CDN_URL } from '../../../../config';
 import { formatBigint } from '../../../../utils/helpers';
+import getCharRank from './api';
+import log from '../../../../utils/logger';
 
-export async function playerRank(interaction: CommandInteraction): Promise<void> {
+export async function playerRank(interaction: CommandInteraction) {
+  if (!interaction.deferred) await interaction.deferReply();
   const character = interaction.options.getString('character');
-  if (!character) return interaction.reply({ content: 'No character was specified!', ephemeral: true });
+  if (!character) return interaction.followUp({ content: 'No character was specified!', ephemeral: true });
   const data = await getCharRank(character);
-  if (!data) return interaction.reply({ content: 'Character does not exist!', ephemeral: true });
+  if (!data) return interaction.followUp({ content: 'Character does not exist!', ephemeral: true });
 
   const charEmbed = new MessageEmbed()
-    .setThumbnail(`${CDN_URL}${data.characterimgurl.substring(38)}`)
-    .setTitle(`${data.charactername} - ${data.worldname}`)
+    .setThumbnail(`${CDN_URL}/${data.CharacterImageURL.substring(38)}`)
+    .setTitle(`${data.Name} - ${data.Server}`)
+    .setFooter({ text: `Last updated: ${data.ImportTime.toUTCString()}` })
     .addFields(
-      { name: 'Name', value: data.charactername, inline: true },
-      { name: 'Class', value: data.jobname, inline: true },
-      { name: 'Server', value: data.worldname, inline: true },
-      { name: 'Level', value: `${data.level}`, inline: true },
-      { name: 'EXP', value: formatBigint(data.exp), inline: true },
-      { name: '\u200B', value: '\u200B', inline: true },
-      { name: 'Overall Rank', value: `${data.overallrank}`, inline: true },
-      { name: 'World Rank', value: `${data.worldrank}`, inline: true },
-      { name: 'World Legion Rank', value: `${data.legionrank ?? 'Unavailable'}`, inline: true },
-      { name: 'Legion Level', value: `${data.legionlevel ?? 'Unavailable'}`, inline: true },
+      { name: 'Name', value: data.Name, inline: true },
+      { name: 'Class', value: data.Class, inline: true },
+      { name: 'Server', value: data.Server, inline: true },
+      { name: 'Level', value: `${data.Level}`, inline: true },
+      { name: 'EXP', value: formatBigint(data.EXP), inline: true },
+      { name: '% to Next Level', value: `${data.EXPPercent}%`, inline: true },
+      { name: 'Average EXP (last 7 days)', value: `${formatBigint(data.WeekAverage)}`, inline: false },
+      { name: 'Average EXP (last 14 days)', value: `${formatBigint(data.FortnightAverage)}`, inline: false },
+      { name: 'Overall Rank', value: `${data.GlobalRanking}`, inline: true },
+      { name: 'World Rank', value: `${data.ServerRank}`, inline: true },
+      {
+        name: 'World Legion Rank',
+        value: `${data.LegionRank !== 0 ? data.LegionRank : 'Unavailable'}`,
+        inline: true,
+      },
+      {
+        name: 'Legion Level',
+        value: `${data.LegionLevel !== 0 ? data.LegionLevel : 'Unavailable'}`,
+        inline: true,
+      },
       {
         name: 'Legion Power',
-        value: `${data.raidpower ? formatBigint(data.raidpower) : 'Unavailable'}`,
+        value: `${data.LegionPower !== 0n ? formatBigint(data.LegionPower) : 'Unavailable'}`,
         inline: true,
       },
       { name: '\u200B', value: '\u200B', inline: true },
     );
-  return interaction.reply({ embeds: [charEmbed] });
+
+  await interaction.editReply({ embeds: [charEmbed] });
+  return log.debug('Player Rank fetched and distributed.');
 }
 
 export const playerSubcommand = new SlashCommandSubcommandBuilder()
