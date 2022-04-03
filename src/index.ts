@@ -6,13 +6,10 @@ import { updateDevCommands, updateGlobalCommands } from './utils/commandUpdater'
 import log from './utils/logger';
 import setUpEventHandlers from './events';
 import { setUpCommandCollections } from './commands';
-import { populateCache } from './db/cache';
 
 const bot = new Client({ intents: GATEWAY_INTENTS });
 
 async function initialize(botClient: Client) {
-  // Populate database cache
-  await populateCache();
   // Add commands to bot client
   await setUpCommandCollections();
   // Add event listeners to bot client
