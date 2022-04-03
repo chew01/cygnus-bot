@@ -21,8 +21,11 @@ async function getCharRank(characterName: string): Promise<parsedCharacterData |
     LegionPower,
   } = data;
 
-  const { WeekAverage, FortnightAverage } = calculateEXPAverages(GraphData);
-  const ImportTime = new Date(GraphData[14].ImportTime * 1000);
+  const { WeekAverage, FortnightAverage } = GraphData ? calculateEXPAverages(GraphData) : {
+    WeekAverage: 0n,
+    FortnightAverage: 0n,
+  };
+  const ImportTime = GraphData ? new Date(GraphData[14].ImportTime * 1000) : undefined;
 
   return {
     Name,
@@ -38,7 +41,7 @@ async function getCharRank(characterName: string): Promise<parsedCharacterData |
     ServerRank,
     LegionLevel,
     LegionRank,
-    LegionPower,
+    LegionPower: BigInt(LegionPower),
     ImportTime,
   };
 }

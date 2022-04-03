@@ -8,7 +8,6 @@ async function characterCacheHelper(characterName: string) {
   if (!cachedCopy) {
     try {
       const res = await axios.get(`${CHARACTER_ENDPOINT}/${characterName}`);
-      if (!res.data.CharacterData) return undefined;
       const data = res.data.CharacterData as rawCharacterData;
       characterCache[characterName] = data;
       return data;
@@ -17,11 +16,14 @@ async function characterCacheHelper(characterName: string) {
     }
   }
   if (cachedCopy && (Date.now() - (cachedCopy.GraphData[14].ImportTime * 1000)) > 43200000) {
-    const res = await axios.get(`${CHARACTER_ENDPOINT}/${characterName}`);
-    if (!res.data.CharacterData) return undefined;
-    const data = res.data.CharacterData as rawCharacterData;
-    characterCache[characterName] = data;
-    return data;
+    try {
+      const res = await axios.get(`${CHARACTER_ENDPOINT}/${characterName}`);
+      const data = res.data.CharacterData as rawCharacterData;
+      characterCache[characterName] = data;
+      return data;
+    } catch {
+      return undefined;
+    }
   }
   return cachedCopy;
 }

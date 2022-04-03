@@ -52,5 +52,5 @@ export type parsedCharacterData = {
     LegionLevel: number,
     LegionRank: number,
     LegionPower: bigint,
-    ImportTime: Date,
+    ImportTime: Date | undefined,
 }

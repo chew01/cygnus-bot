@@ -1,21 +1,21 @@
 import { CommandInteraction, MessageEmbed } from 'discord.js';
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { CDN_URL } from '../../../../config';
-import { formatBigint } from '../../../../utils/helpers';
+import { formatBigint, serverToEmoji } from '../../../../utils/helpers';
 import getCharRank from './api';
 import log from '../../../../utils/logger';
 
 export async function playerRank(interaction: CommandInteraction) {
   if (!interaction.deferred) await interaction.deferReply();
   const character = interaction.options.getString('character');
-  if (!character) return interaction.followUp({ content: 'No character was specified!', ephemeral: true });
+  if (!character) return interaction.editReply({ content: 'No character was specified!' });
   const data = await getCharRank(character);
-  if (!data) return interaction.followUp({ content: 'Character does not exist!', ephemeral: true });
+  if (!data) return interaction.editReply({ content: 'Character does not exist!' });
 
   const charEmbed = new MessageEmbed()
     .setThumbnail(`${CDN_URL}/${data.CharacterImageURL.substring(38)}`)
-    .setTitle(`${data.Name} - ${data.Server}`)
-    .setFooter({ text: `Last updated: ${data.ImportTime.toUTCString()}` })
+    .setTitle(`${data.Name} - ${data.Server} ${serverToEmoji(data.Server)}`)
+    .setFooter({ text: `Last updated: ${data.ImportTime ? data.ImportTime.toUTCString() : 'Unknown'}` })
     .addFields(
       { name: 'Name', value: data.Name, inline: true },
       { name: 'Class', value: data.Class, inline: true },

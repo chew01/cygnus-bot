@@ -8,7 +8,6 @@ const rankCommand: SlashCommand = {
     .setName('ms')
     .setDescription('Accesses Maplestory rankings.')
     .addSubcommand(playerSubcommand),
-  // @ts-ignore
   async execute(interaction: CommandInteraction) {
     const subcommand = interaction.options.getSubcommand();
     if (subcommand === 'p') return playerRank(interaction);
